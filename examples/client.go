@@ -32,6 +32,9 @@ func main() {
 		MatchMsg: func(req, resp []byte) bool {
 			return string(req) == string(resp)
 		},
+
+		// Auto reconnect on error
+		Reconnect: true,
 	}
 
 	// Connect
@@ -39,7 +42,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for i := 1; i <= 10; i++ {
+	for i := 1; i <= 100; i++ {
 
 		// Create the message with a callback
 		msg := evtwebsocket.Msg{
@@ -53,8 +56,7 @@ func main() {
 
 		// Send the message to the server
 		if err := c.Send(msg); err != nil {
-			log.Println(err)
-			break
+			log.Println("Unable to send: ", err.Error())
 		}
 
 		// Take a break

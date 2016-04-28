@@ -2,6 +2,7 @@ package evtwebsocket
 
 import (
 	"errors"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -12,6 +13,7 @@ type Conn struct {
 	OnError     func(error)
 	OnConnected func(*websocket.Conn)
 	MatchMsg    func([]byte, []byte) bool
+	Reconnect   bool
 	ws          *websocket.Conn
 	url         string
 	closed      bool
@@ -41,13 +43,12 @@ func (c *Conn) Dial(url string) error {
 	go c.OnConnected(c.ws)
 
 	go func() {
-		defer c.ws.Close()
+		defer c.close()
 
 		for {
 			var msg = make([]byte, 512)
 			var n int
 			if n, err = c.ws.Read(msg); err != nil {
-				c.closed = true
 				c.OnError(err)
 				return
 			}
@@ -96,4 +97,17 @@ func (c *Conn) onMsg(msg []byte) {
 	// If we didn't find a propper callback we
 	// just fire the OnMessage global handler
 	go c.OnMessage(msg)
+}
+
+func (c *Conn) close() {
+	c.ws.Close()
+	c.closed = true
+	if c.Reconnect {
+		for {
+			if err := c.Dial(c.url); err == nil {
+				break
+			}
+			time.Sleep(time.Second * 1)
+		}
+	}
 }

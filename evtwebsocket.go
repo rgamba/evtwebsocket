@@ -9,15 +9,18 @@ import (
 
 // Conn is the connection structure.
 type Conn struct {
-	OnMessage   func([]byte)
-	OnError     func(error)
-	OnConnected func(*websocket.Conn)
-	MatchMsg    func([]byte, []byte) bool
-	Reconnect   bool
-	ws          *websocket.Conn
-	url         string
-	closed      bool
-	msgQueue    []Msg
+	OnMessage        func([]byte)
+	OnError          func(error)
+	OnConnected      func(*websocket.Conn)
+	MatchMsg         func([]byte, []byte) bool
+	Reconnect        bool
+	PingMsg          []byte
+	PingIntervalSecs int
+	ws               *websocket.Conn
+	url              string
+	closed           bool
+	msgQueue         []Msg
+	pingTimer        time.Time
 }
 
 // Msg is the message structure.
@@ -56,6 +59,8 @@ func (c *Conn) Dial(url string) error {
 		}
 	}()
 
+	c.setupPing()
+
 	return nil
 }
 
@@ -65,9 +70,12 @@ func (c *Conn) Send(msg Msg) error {
 		return errors.New("closed connection")
 	}
 	if _, err := c.ws.Write(msg.Body); err != nil {
-		c.ws.Close()
+		c.close()
 		c.OnError(err)
 		return err
+	}
+	if c.PingIntervalSecs > 0 && c.PingMsg != nil {
+		c.pingTimer = time.Now().Add(time.Second * time.Duration(c.PingIntervalSecs))
 	}
 	if msg.Callback != nil {
 		c.msgQueue = append(c.msgQueue, msg)
@@ -109,5 +117,23 @@ func (c *Conn) close() {
 			}
 			time.Sleep(time.Second * 1)
 		}
+	}
+}
+
+func (c *Conn) setupPing() {
+	if c.PingIntervalSecs > 0 && len(c.PingMsg) > 0 {
+		c.pingTimer = time.Now().Add(time.Second * time.Duration(c.PingIntervalSecs))
+		go func() {
+			for {
+				if !time.Now().After(c.pingTimer) {
+					time.Sleep(time.Millisecond * 100)
+					continue
+				}
+				if c.Send(Msg{c.PingMsg, nil}) != nil {
+					return
+				}
+				c.pingTimer = time.Now().Add(time.Second * time.Duration(c.PingIntervalSecs))
+			}
+		}()
 	}
 }

@@ -1,10 +1,11 @@
 # Event Websocket
 
-evtwebsocket provides an extremely easy way of dealing with websocket connections as a client in an event oriented manner.
+evtwebsocket provides an extremely easy way of dealing with websocket connections as a client in an event oriented manner for long-lived connections.
 ## Features
 - Event based
 - Reconnect in case of error
 - Request / Response match with callbacks
+- Automatic ping integration
 
 ```go
 conn = evtwebsocket.Conn{
@@ -21,6 +22,10 @@ conn = evtwebsocket.Conn{
         fmt.Printf("Error: %s\n", err.Error())
         os.Exit(1)   
     },
+    // Ping interval in secs (optional)
+    PingIntervalSecs: 5,
+    // Ping message to send (optional)
+    PingMsg: []byte("PING"),
 }
 ```
 It also provides an extremely easy way to match request and response messages to work with callbacks like:

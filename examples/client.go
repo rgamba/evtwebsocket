@@ -35,6 +35,12 @@ func main() {
 
 		// Auto reconnect on error
 		Reconnect: true,
+
+		// Set the ping interval (optional)
+		PingIntervalSecs: 5,
+
+		// Set the ping message (optional)
+		PingMsg: []byte("PING"),
 	}
 
 	// Connect

@@ -10,7 +10,7 @@ evtwebsocket provides an extremely easy way of dealing with websocket connection
 ```go
 conn = evtwebsocket.Conn{
     // Fires when the connection is established
-    OnConnect: func(ws *ws.Conn) {
+    OnConnected: func(ws *websocket.Conn) {
         fmt.Println("Connected!")   
     },
     // Fires when a new message arrives from the server
@@ -26,6 +26,11 @@ conn = evtwebsocket.Conn{
     PingIntervalSecs: 5,
     // Ping message to send (optional)
     PingMsg: []byte("PING"),
+}
+
+err := conn.Dial("https://example.com/ws")
+if err != nil {
+    log.Fatal(err)
 }
 ```
 It also provides an extremely easy way to match request and response messages to work with callbacks like:

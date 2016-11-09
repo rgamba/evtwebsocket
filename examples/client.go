@@ -6,20 +6,18 @@ import (
 	"time"
 
 	"github.com/rgamba/evtwebsocket"
-
-	"golang.org/x/net/websocket"
 )
 
 func main() {
 	c := evtwebsocket.Conn{
 
 		// When connection is established
-		OnConnected: func(w *websocket.Conn) {
+		OnConnected: func(w *evtwebsocket.Conn) {
 			fmt.Println("Connected")
 		},
 
 		// When a message arrives
-		OnMessage: func(msg []byte) {
+		OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
 			log.Printf("Received uncatched message: %s\n", msg)
 		},
 
@@ -44,7 +42,7 @@ func main() {
 	}
 
 	// Connect
-	if err := c.Dial("ws://echo.websocket.org"); err != nil {
+	if err := c.Dial("ws://echo.websocket.org", ""); err != nil {
 		log.Fatal(err)
 	}
 

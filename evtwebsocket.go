@@ -9,9 +9,9 @@ import (
 
 // Conn is the connection structure.
 type Conn struct {
-	OnMessage        func([]byte, Conn)
+	OnMessage        func([]byte, *Conn)
 	OnError          func(error)
-	OnConnected      func(Conn)
+	OnConnected      func(*Conn)
 	MatchMsg         func([]byte, []byte) bool
 	Reconnect        bool
 	PingMsg          []byte
@@ -112,7 +112,7 @@ func (c *Conn) close() {
 	c.closed = true
 	if c.Reconnect {
 		for {
-			if err := c.Dial(c.url); err == nil {
+			if err := c.Dial(c.url, ""); err == nil {
 				break
 			}
 			time.Sleep(time.Second * 1)

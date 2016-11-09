@@ -18,6 +18,7 @@ type Conn struct {
 	PingIntervalSecs int
 	ws               *websocket.Conn
 	url              string
+	subprotocol      string
 	closed           bool
 	msgQueue         []Msg
 	pingTimer        time.Time
@@ -36,6 +37,7 @@ type Msg struct {
 func (c *Conn) Dial(url, subprotocol string) error {
 	c.closed = true
 	c.url = url
+	c.subprotocol = subprotocol
 	c.msgQueue = []Msg{}
 	var err error
 	c.ws, err = websocket.Dial(url, subprotocol, "http://localhost/")
@@ -112,7 +114,7 @@ func (c *Conn) close() {
 	c.closed = true
 	if c.Reconnect {
 		for {
-			if err := c.Dial(c.url, ""); err == nil {
+			if err := c.Dial(c.url, c.subprotocol); err == nil {
 				break
 			}
 			time.Sleep(time.Second * 1)

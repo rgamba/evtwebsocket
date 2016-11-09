@@ -10,11 +10,11 @@ evtwebsocket provides an extremely easy way of dealing with websocket connection
 ```go
 conn = evtwebsocket.Conn{
     // Fires when the connection is established
-    OnConnected: func(ws *websocket.Conn) {
+    OnConnected: func(w *evtwebsocket.Conn) {
         fmt.Println("Connected!")   
     },
     // Fires when a new message arrives from the server
-    OnMessage: func(msg []byte) {
+    OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
         fmt.Printf("New message: %s\n", msg)   
     },
     // Fires when an error occurs and connection is closed
@@ -28,7 +28,7 @@ conn = evtwebsocket.Conn{
     PingMsg: []byte("PING"),
 }
 
-err := conn.Dial("https://example.com/ws")
+err := conn.Dial("https://example.com/ws", "")
 if err != nil {
     log.Fatal(err)
 }

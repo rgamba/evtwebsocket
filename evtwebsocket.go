@@ -9,9 +9,9 @@ import (
 
 // Conn is the connection structure.
 type Conn struct {
-	OnMessage        func([]byte)
+	OnMessage        func([]byte, Conn)
 	OnError          func(error)
-	OnConnected      func(*websocket.Conn)
+	OnConnected      func(Conn)
 	MatchMsg         func([]byte, []byte) bool
 	Reconnect        bool
 	PingMsg          []byte
@@ -33,17 +33,17 @@ type Msg struct {
 // host provided in the url parameter.
 // Note that all the parameters of the structure
 // must have been set before calling it.
-func (c *Conn) Dial(url string) error {
+func (c *Conn) Dial(url, subprotocol string) error {
 	c.closed = true
 	c.url = url
 	c.msgQueue = []Msg{}
 	var err error
-	c.ws, err = websocket.Dial(url, "", "http://localhost/")
+	c.ws, err = websocket.Dial(url, subprotocol, "http://localhost/")
 	if err != nil {
 		return err
 	}
 	c.closed = false
-	go c.OnConnected(c.ws)
+	go c.OnConnected(c)
 
 	go func() {
 		defer c.close()
@@ -104,7 +104,7 @@ func (c *Conn) onMsg(msg []byte) {
 	}
 	// If we didn't find a propper callback we
 	// just fire the OnMessage global handler
-	go c.OnMessage(msg)
+	go c.OnMessage(msg, c)
 }
 
 func (c *Conn) close() {

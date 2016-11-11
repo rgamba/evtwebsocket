@@ -11,3 +11,7 @@ notifications:
 before_install:
     - go get -u golang.org/x/net/websocket
     - go get -u github.com/golang/lint/golint
+
+script:
+    - golint
+    - go test

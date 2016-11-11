@@ -1,5 +1,7 @@
 # Event Websocket
 
+[![Build Status](https://travis-ci.org/rgamba/evtwebsocket.svg?branch=master)](https://travis-ci.org/rgamba/evtwebsocket)
+
 evtwebsocket provides an extremely easy way of dealing with websocket connections as a client in an event oriented manner for long-lived connections.
 ## Features
 - Event based

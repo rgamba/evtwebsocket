@@ -27,7 +27,7 @@ type Conn struct {
 // Msg is the message structure.
 type Msg struct {
 	Body     []byte
-	Callback func([]byte)
+	Callback func([]byte, *Conn)
 }
 
 // Dial sets up the connection with the remote
@@ -45,7 +45,9 @@ func (c *Conn) Dial(url, subprotocol string) error {
 		return err
 	}
 	c.closed = false
-	go c.OnConnected(c)
+	if c.OnConnected != nil {
+		go c.OnConnected(c)
+	}
 
 	go func() {
 		defer c.close()
@@ -54,7 +56,9 @@ func (c *Conn) Dial(url, subprotocol string) error {
 			var msg = make([]byte, 512)
 			var n int
 			if n, err = c.ws.Read(msg); err != nil {
-				c.OnError(err)
+				if c.OnError != nil {
+					c.OnError(err)
+				}
 				return
 			}
 			c.onMsg(msg[:n])
@@ -73,7 +77,9 @@ func (c *Conn) Send(msg Msg) error {
 	}
 	if _, err := c.ws.Write(msg.Body); err != nil {
 		c.close()
-		c.OnError(err)
+		if c.OnError != nil {
+			c.OnError(err)
+		}
 		return err
 	}
 	if c.PingIntervalSecs > 0 && c.PingMsg != nil {
@@ -93,20 +99,20 @@ func (c *Conn) IsConnected() bool {
 }
 
 func (c *Conn) onMsg(msg []byte) {
-	if c.MatchMsg == nil {
-		return
-	}
-	for i, m := range c.msgQueue {
-		if m.Callback != nil && c.MatchMsg(msg, m.Body) {
-			go m.Callback(msg)
-			// Delete this element from the queue
-			c.msgQueue = append(c.msgQueue[:i], c.msgQueue[i+1:]...)
-			return
+	if c.MatchMsg != nil {
+		for i, m := range c.msgQueue {
+			if m.Callback != nil && c.MatchMsg(msg, m.Body) {
+				go m.Callback(msg, c)
+				// Delete this element from the queue
+				c.msgQueue = append(c.msgQueue[:i], c.msgQueue[i+1:]...)
+				break
+			}
 		}
 	}
-	// If we didn't find a propper callback we
-	// just fire the OnMessage global handler
-	go c.OnMessage(msg, c)
+	// Fire OnMessage every time.
+	if c.OnMessage != nil {
+		go c.OnMessage(msg, c)
+	}
 }
 
 func (c *Conn) close() {

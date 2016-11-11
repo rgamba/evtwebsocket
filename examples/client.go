@@ -13,20 +13,20 @@ func main() {
 
 		// When connection is established
 		OnConnected: func(w *evtwebsocket.Conn) {
-			fmt.Println("Connected")
+			log.Println("Connected")
 		},
 
 		// When a message arrives
 		OnMessage: func(msg []byte, w *evtwebsocket.Conn) {
-			log.Printf("Received uncatched message: %s\n", msg)
+			log.Printf("OnMessage: %s\n", msg)
 		},
 
 		// When the client disconnects for any reason
 		OnError: func(err error) {
-			fmt.Printf("** ERROR **\n%s\n", err.Error())
+			log.Printf("** ERROR **\n%s\n", err.Error())
 		},
 
-		// This is used to match the request and response messages
+		// This is used to match the request and response messagesP>termina
 		MatchMsg: func(req, resp []byte) bool {
 			return string(req) == string(resp)
 		},
@@ -51,12 +51,12 @@ func main() {
 		// Create the message with a callback
 		msg := evtwebsocket.Msg{
 			Body: []byte(fmt.Sprintf("Hello %d", i)),
-			Callback: func(resp []byte) {
-				fmt.Printf("Got back: %s\n", resp)
+			Callback: func(resp []byte, w *evtwebsocket.Conn) {
+				log.Printf("[%d] Callback: %s\n", i, resp)
 			},
 		}
 
-		log.Printf("Sending message: %s\n", msg.Body)
+		log.Printf("[%d] Sending message: %s\n", i, msg.Body)
 
 		// Send the message to the server
 		if err := c.Send(msg); err != nil {

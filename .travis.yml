@@ -1,0 +1,13 @@
+language: go
+
+matrix:
+    - include:
+        - go: 1.6
+        - go: 1.7
+
+notifications:
+    email: false
+
+before_install:
+    - go get -u golang.org/x/net/websocket
+    - go get -u github.com/golang/lint/golint

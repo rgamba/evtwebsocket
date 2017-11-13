@@ -70,6 +70,46 @@ func (c *Conn) Dial(url, subprotocol string) error {
 	return nil
 }
 
+// Dial sets up the connection with the remote
+// host provided in the url parameter.
+// Note that all the parameters of the structure
+// must have been set before calling it.
+func (c *Conn) DialConfig(config *websocket.Config) error {
+	c.closed = true
+	c.url = config.Location.String()
+	c.subprotocol = config.Protocol[0]
+	c.msgQueue = []Msg{}
+	var err error
+	c.ws, err = websocket.DialConfig(config)
+	if err != nil {
+		return err
+	}
+	c.closed = false
+	if c.OnConnected != nil {
+		go c.OnConnected(c)
+	}
+
+	go func() {
+		defer c.close()
+
+		for {
+			var msg = make([]byte, 512)
+			var n int
+			if n, err = c.ws.Read(msg); err != nil {
+				if c.OnError != nil {
+					c.OnError(err)
+				}
+				return
+			}
+			c.onMsg(msg[:n])
+		}
+	}()
+
+	c.setupPing()
+
+	return nil
+}
+
 // Send sends a message through the connection.
 func (c *Conn) Send(msg Msg) error {
 	if c.closed {

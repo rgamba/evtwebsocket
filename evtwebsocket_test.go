@@ -3,6 +3,8 @@ package evtwebsocket
 import (
 	"testing"
 	"time"
+	"golang.org/x/net/websocket"
+	"crypto/tls"
 )
 
 func TestConn_Dial(t *testing.T) {
@@ -36,6 +38,48 @@ func TestConn_Dial(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Conn{}
 			if err := c.Dial(tt.args.url, tt.args.subprotocol); (err != nil) != tt.wantErr {
+				t.Errorf("Conn.Dial() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestConn_DialConfig(t *testing.T) {
+	type args struct {
+		url         string
+		subprotocol string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			"ws-normal",
+			args{
+				"ws://echo.websocket.org",
+				"",
+			},
+			false,
+		},
+		{
+			"ws-tls",
+			args{
+				"wss://echo.websocket.org",
+				"",
+			},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Conn{}
+			config, _ := websocket.NewConfig(tt.args.url, "http://localhost")
+			config.TlsConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+			config.Protocol = []string{tt.args.subprotocol}
+			if err := c.DialConfig(config); (err != nil) != tt.wantErr {
 				t.Errorf("Conn.Dial() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

@@ -95,9 +95,12 @@ func (c *Conn) DialConfig(config *websocket.Config) error {
 
 	go func() {
 		defer c.closeConfig(config)
-
+		bufferSize := c.BufferSize
+		if bufferSize == 0 {
+			bufferSize = 512
+		}
 		for {
-			var msg = make([]byte, 512)
+			var msg = make([]byte, bufferSize)
 			var n int
 			if n, err = c.ws.Read(msg); err != nil {
 				if c.OnError != nil {

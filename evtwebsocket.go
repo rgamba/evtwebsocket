@@ -90,7 +90,7 @@ func (c *Conn) DialConfig(config *websocket.Config) error {
 	}
 
 	go func() {
-		defer c.close()
+		defer c.closeConfig(config)
 
 		for {
 			var msg = make([]byte, 512)
@@ -168,6 +168,19 @@ func (c *Conn) close() {
 	}
 }
 
+func (c *Conn) closeConfig(config *websocket.Config) {
+	c.ws.Close()
+	c.closed = true
+	if c.Reconnect {
+		for {
+			if err := c.DialConfig(config); err == nil {
+				break
+			}
+			time.Sleep(time.Second * 1)
+		}
+	}
+}
+
 func (c *Conn) setupPing() {
 	if c.PingIntervalSecs > 0 && len(c.PingMsg) > 0 {
 		c.pingTimer = time.Now().Add(time.Second * time.Duration(c.PingIntervalSecs))
@@ -184,4 +197,8 @@ func (c *Conn) setupPing() {
 			}
 		}()
 	}
+}
+
+func (c *Conn) Url() string {
+	return c.url
 }

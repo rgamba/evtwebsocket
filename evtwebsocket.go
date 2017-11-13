@@ -22,6 +22,7 @@ type Conn struct {
 	closed           bool
 	msgQueue         []Msg
 	pingTimer        time.Time
+	BufferSize       int
 }
 
 // Msg is the message structure.
@@ -51,9 +52,12 @@ func (c *Conn) Dial(url, subprotocol string) error {
 
 	go func() {
 		defer c.close()
-
+		bufferSize := c.BufferSize
+		if bufferSize == 0 {
+			bufferSize = 512
+		}
 		for {
-			var msg = make([]byte, 512)
+			var msg = make([]byte, bufferSize)
 			var n int
 			if n, err = c.ws.Read(msg); err != nil {
 				if c.OnError != nil {
